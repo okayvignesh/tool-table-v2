@@ -486,7 +486,7 @@ const Modal = ({ id, metric, setMetric }) => {
 				createdRecords.push(record);
 			}
 		});
-		console.log(updatedRecords, createdRecords);
+
 		setUpdatedRecords(updatedRecords);
 		setCreatedRecords(createdRecords);
 	};
@@ -541,6 +541,21 @@ const Modal = ({ id, metric, setMetric }) => {
 			benchmark_logic_type: '',
 			ranking_metric: '',
 		});
+		resetgeo();
+	};
+
+	const resetgeo = () => {
+		setRegion((prevRegions) =>
+			prevRegions.map((region) => ({
+				...region,
+				selected: false,
+			}))
+		);
+		setSelectedCountries([]);
+		setSelectedMarketTeams([])
+		setSelectedMarkets([]);
+		setSelectedStores([]);
+		setfinalSelections([]);
 	};
 
 	return (
@@ -762,9 +777,9 @@ const Modal = ({ id, metric, setMetric }) => {
 															<li key={storeIndex}>
 																{
 																	final[
-																		finalSelectionType != 'store'
-																			? finalSelectionType
-																			: 'name'
+																	finalSelectionType != 'store'
+																		? finalSelectionType
+																		: 'name'
 																	]
 																}
 															</li>
