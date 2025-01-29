@@ -125,12 +125,12 @@ function Table() {
 				<button className="border-img" onClick={() => toggleAll(false)}>
 					Collapse All
 				</button>
-				<input
+				{/* <input
 					type="text"
 					placeholder="Search"
 					value={search}
 					onChange={handleSearch}
-				/>
+				/> */}
 			</div>
 
 			<div className="table-parent">
