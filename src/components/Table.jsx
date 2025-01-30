@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { FaCaretRight } from 'react-icons/fa6';
 import { TiArrowSortedDown } from 'react-icons/ti';
 import { FiPlusCircle } from 'react-icons/fi';
-import Modal from './generic/Modal';
+import ActionModal from './generic/Modal';
 import FilterDropdown from './generic/FilterDropdown';
 import { MdDelete } from 'react-icons/md';
 
@@ -339,7 +339,7 @@ function Table() {
 				</table>
 			</div>
 
-			<Modal id="actionModal" metric={selectedMetric} setMetric={setMetrics} />
+			<ActionModal id="actionModal" metric={selectedMetric} setMetric={setMetrics} />
 		</div>
 	);
 }

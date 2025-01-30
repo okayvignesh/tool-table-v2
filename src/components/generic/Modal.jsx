@@ -4,8 +4,9 @@ import { metadata } from '../../data/metadata';
 import { regionData } from '../../data/regionData';
 import { HiMiniCheck } from 'react-icons/hi2';
 import MultiSelect from './MultiSelect';
+import { Modal } from 'bootstrap';
 
-const Modal = ({ id, metric, setMetric }) => {
+const ActionModal = ({ id, metric, setMetric }) => {
 	const [page, setPage] = useState(1);
 	const [region, setRegion] = useState(
 		regionData.map((region) => ({
@@ -19,6 +20,7 @@ const Modal = ({ id, metric, setMetric }) => {
 	const [selectedStores, setSelectedStores] = useState([]);
 	const [finalSelections, setfinalSelections] = useState([]);
 	const [finalSelectionType, setfinalSelectionType] = useState('');
+	const [isDirty, setIsDirty] = useState(false);
 	const [metricFormData, setMetricFormData] = useState({
 		geo: [],
 		lob: [],
@@ -34,10 +36,34 @@ const Modal = ({ id, metric, setMetric }) => {
 		benchmark_logic_type: '',
 		ranking_metric: '',
 	});
+	const initialFormState = JSON.stringify(metricFormData);
 	const [errors, setErrors] = useState({});
 	const [createdRecords, setCreatedRecords] = useState([]);
 	const [updatedRecords, setUpdatedRecords] = useState([]);
 	const closeBtnRef = useRef(null);
+
+	useEffect(() => {
+		setIsDirty(JSON.stringify(metricFormData) !== initialFormState);
+	}, [metricFormData]);
+
+
+	const handleCancel = (e) => {
+		if (isDirty) {
+			const confirmLeave = window.confirm(
+				"You have unsaved changes. Are you sure you want to discard them?"
+			);
+			if (!confirmLeave) {
+				e.preventDefault();
+			}
+		}
+		const modalElement = document.getElementById(id); 
+		if (modalElement) {
+		  const modalInstance = Modal.getInstance(modalElement);
+		  if (modalInstance) {
+			modalInstance.hide();
+		  }
+		}
+	};
 
 	const handleChange = (event) => {
 		const { name, value } = event.target;
@@ -1069,7 +1095,7 @@ const Modal = ({ id, metric, setMetric }) => {
 								<button
 									className="btn btn-secondary"
 									data-bs-dismiss="modal"
-									aria-label="Close">
+									aria-label="Close" onClick={handleCancel}>
 									Cancel
 								</button>
 								<button className="btn btn-primary" onClick={nextPage}>
@@ -1078,6 +1104,12 @@ const Modal = ({ id, metric, setMetric }) => {
 							</>
 						) : (
 							<>
+								<button
+									className="btn btn-secondary"
+									data-bs-dismiss="modal"
+									aria-label="Close" onClick={handleCancel}>
+									Cancel
+								</button>
 								<button
 									className="btn btn-secondary"
 									onClick={() => setPage(1)}>
@@ -1103,4 +1135,4 @@ const Modal = ({ id, metric, setMetric }) => {
 	);
 };
 
-export default Modal;
+export default ActionModal;
