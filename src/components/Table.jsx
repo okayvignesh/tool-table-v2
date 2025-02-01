@@ -1,5 +1,5 @@
 import { metadata } from '../data/metadata';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaCaretRight } from 'react-icons/fa6';
 import { TiArrowSortedDown } from 'react-icons/ti';
 import { FiPlusCircle } from 'react-icons/fi';
@@ -24,6 +24,16 @@ function Table() {
 	const [debouncedSearch, setDebouncedSearch] = useState('');
 	const [selectedMetric, setSelectedMetric] = useState(null);
 	const [enableDelete, setEnableDelete] = useState(false);
+	const [update, setUpdate] = useState(false);
+	const [filters, setFilters] = useState({
+		geo: [],
+		lob: [],
+		rtm: [],
+		same_day_domestic: [],
+		metric_id: [],
+		metric_name: [],
+	});
+	const [triggerResetFilter, setTriggerResetFilter] = useState(false);
 
 	const toggleExpand = (index) => {
 		setMetrics((prevMetrics) =>
@@ -69,6 +79,38 @@ function Table() {
 		);
 	}, [debouncedSearch]);
 
+	const updateFilters = () => {
+		const newFilters = {
+			geo: [...new Set([...filters.geo, ...getUniqueValues(metrics, 'geo')])],
+			lob: [...new Set([...filters.lob, ...getUniqueValues(metrics, 'lob')])],
+			rtm: [...new Set([...filters.rtm, ...getUniqueValues(metrics, 'rtm')])],
+			same_day_domestic: [
+				...new Set([
+					...filters.same_day_domestic,
+					...getUniqueValues(metrics, 'same_day_domestic'),
+				]),
+			],
+			metric_id: [
+				...new Set([
+					...filters.metric_id,
+					...getUniqueValues(metrics, 'metric_id', 'parent'),
+				]),
+			],
+			metric_name: [
+				...new Set([
+					...filters.metric_name,
+					...getUniqueValues(metrics, 'metric_name', 'parent'),
+				]),
+			],
+		};
+		setFilters(newFilters);
+		setUpdate(false);
+	};
+
+	useEffect(() => {
+		updateFilters();
+	}, [update]);
+
 	const handleSearch = (e) => {
 		setSearch(e.target.value);
 	};
@@ -112,9 +154,21 @@ function Table() {
 		});
 	};
 
-	const handleDelete = () => {
-		
-	};
+	const handleDelete = () => {};
+
+	function getUniqueValues(items, property, level = 'child') {
+		if (level === 'parent') {
+			return [...new Set(items.map((item) => item[property]))];
+		} else {
+			return [
+				...new Set(
+					items.flatMap((item) =>
+						item.child_metrics.map((child) => child[property])
+					)
+				),
+			];
+		}
+	}
 
 	return (
 		<div>
@@ -140,91 +194,114 @@ function Table() {
 							<th>Action</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'metric_id'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(
+											metrics,
+											'metric_id',
+											'parent'
+										)}
+									/>
 									Metric ID
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'metric_name'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(
+											metrics,
+											'metric_name',
+											'parent'
+										)}
+									/>
 									Metric Name
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'geo'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(metrics, 'geo')}
+									/>
 									Geo
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'lob'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(metrics, 'lob')}
+									/>
 									LOB
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'rtm'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(metrics, 'rtm')}
+									/>
 									RTM
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
+									<FilterDropdown
+										triggerResetFilter={triggerResetFilter}
+										setTriggerResetFilter={setTriggerResetFilter}
 										items={metrics}
 										changeState={setMetrics}
 										property={'same_day_domestic'}
-									/> */}
+										setFilters={setFilters}
+										filters={filters}
+										uniqueValues={getUniqueValues(metrics, 'same_day_domestic')}
+									/>
 									Same Day Domestic
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
-										items={metrics}
-										changeState={setMetrics}
-										property={'metric_type'}
-									/> */}
 									Metric Type
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
-										items={metrics}
-										changeState={setMetrics}
-										property={'benchmark_value'}
-									/> */}
 									Benchmark Value
 								</div>
 							</th>
 							<th>
 								<div className="d-flex align-items-center justify-content-start column-gap-2">
-									{/* <FilterDropdown
-										items={metrics}
-										changeState={setMetrics}
-										property={'metric_weightage'}
-									/> */}
 									Metric Weightage
 								</div>
 							</th>
@@ -232,9 +309,19 @@ function Table() {
 					</thead>
 					<tbody>
 						{metrics ? (
-							metrics.filter((metric) => metric.show).length > 0 ? (
+							metrics.filter((metric) =>
+								Object.keys(filters)
+									.filter((key) => key == 'metric_id' || key == 'metric_name')
+									.every((key) => filters[key].includes(metric[key]))
+							).length > 0 ? (
 								metrics
-									.filter((metric) => metric.show)
+									.filter((metric) =>
+										Object.keys(filters)
+											.filter(
+												(key) => key == 'metric_id' || key == 'metric_name'
+											)
+											.every((key) => filters[key].includes(metric[key]))
+									)
 									.map((metric, index) => (
 										<>
 											<tr>
@@ -280,7 +367,16 @@ function Table() {
 											</tr>
 											{metric.expanded &&
 												metric.child_metrics
-													.filter((child_metric) => child_metric.show)
+													.filter((child_metric) =>
+														Object.keys(filters)
+															.filter(
+																(key) =>
+																	key !== 'metric_id' && key !== 'metric_name'
+															)
+															.every((key) =>
+																filters[key].includes(child_metric[key])
+															)
+													)
 													.map((child_metric, child_metricIndex) => (
 														<tr
 															key={`${metric.name}-${child_metric.name}-${child_metricIndex}`}
@@ -339,7 +435,14 @@ function Table() {
 				</table>
 			</div>
 
-			<ActionModal id="actionModal" metric={selectedMetric} setMetric={setMetrics} />
+			<ActionModal
+				id="actionModal"
+				metric={selectedMetric}
+				setTriggerResetFilter={setTriggerResetFilter}
+				updateFilters={updateFilters}
+				setMetric={setMetrics}
+				setUpdate={setUpdate}
+			/>
 		</div>
 	);
 }

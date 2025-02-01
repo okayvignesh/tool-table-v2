@@ -5,8 +5,16 @@ import { regionData } from '../../data/regionData';
 import { HiMiniCheck } from 'react-icons/hi2';
 import MultiSelect from './MultiSelect';
 import { Modal } from 'bootstrap';
+import { PiTrainRegionalBold } from 'react-icons/pi';
 
-const ActionModal = ({ id, metric, setMetric }) => {
+const ActionModal = ({
+	id,
+	metric,
+	setMetric,
+	updateFilters,
+	setUpdate,
+	setTriggerResetFilter,
+}) => {
 	const [page, setPage] = useState(1);
 	const [region, setRegion] = useState(
 		regionData.map((region) => ({
@@ -36,33 +44,43 @@ const ActionModal = ({ id, metric, setMetric }) => {
 		benchmark_logic_type: '',
 		ranking_metric: '',
 	});
-	const initialFormState = JSON.stringify(metricFormData);
+	const initialFormState = useRef(JSON.stringify(region));
 	const [errors, setErrors] = useState({});
 	const [createdRecords, setCreatedRecords] = useState([]);
 	const [updatedRecords, setUpdatedRecords] = useState([]);
 	const closeBtnRef = useRef(null);
 
 	useEffect(() => {
-		setIsDirty(JSON.stringify(metricFormData) !== initialFormState);
-	}, [metricFormData]);
-
+		setIsDirty(JSON.stringify(region) !== initialFormState.current);
+	}, [region]);
 
 	const handleCancel = (e) => {
+		console.log(region, initialFormState, isDirty);
 		if (isDirty) {
 			const confirmLeave = window.confirm(
-				"You have unsaved changes. Are you sure you want to discard them?"
+				'You have unsaved changes. Are you sure you want to discard them?'
 			);
 			if (!confirmLeave) {
 				e.preventDefault();
+				e.stopPropagation();
+				return;
+			} else {
+				resetgeo();
 			}
 		}
-		const modalElement = document.getElementById(id); 
-		if (modalElement) {
-		  const modalInstance = Modal.getInstance(modalElement);
-		  if (modalInstance) {
-			modalInstance.hide();
-		  }
-		}
+		closeBtnRef.current.click();
+
+		// const modalElement = document.getElementById(id);
+		// if (modalElement) {
+		// 	const modalInstance = Modal.getInstance(modalElement);
+		// 	if (modalInstance) {
+		// 		modalInstance.hide();
+		// 		const backdropElement = document.querySelector('.modal-backdrop');
+		// 		if (backdropElement) {
+		// 		  backdropElement.remove();
+		// 		}
+		// 	}
+		// }
 	};
 
 	const handleChange = (event) => {
@@ -205,7 +223,7 @@ const ActionModal = ({ id, metric, setMetric }) => {
 					if (e.marketTeam) return e.marketTeam;
 					if (e.market) return e.market;
 					if (e.store) return e.store;
-					return '';
+					return e.name;
 				}),
 			}));
 		}
@@ -517,11 +535,13 @@ const ActionModal = ({ id, metric, setMetric }) => {
 		setCreatedRecords(createdRecords);
 	};
 
-	const updateMetrics = (metricId, createdRecords, updatedRecords) => {
+	const updateMetrics = async (metricId, createdRecords, updatedRecords) => {
 		setMetric((prevMetrics) =>
 			prevMetrics.map((metric) => {
 				if (metric.metric_id === metricId) {
 					const updatedMetric = { ...metric };
+
+					const existingChildMetrics = updatedMetric.child_metrics || [];
 
 					if (updatedRecords) {
 						updatedMetric.child_metrics = updatedRecords.map((record) => ({
@@ -533,7 +553,7 @@ const ActionModal = ({ id, metric, setMetric }) => {
 
 					if (createdRecords) {
 						updatedMetric.child_metrics = [
-							...(updatedMetric.child_metrics || []),
+							...existingChildMetrics,
 							...createdRecords.map((record) => ({
 								...record,
 								show: true,
@@ -548,9 +568,16 @@ const ActionModal = ({ id, metric, setMetric }) => {
 			})
 		);
 
+		updateFilters();
+		setUpdate(true);
+		setTriggerResetFilter(true);
 		if (closeBtnRef.current) {
 			closeBtnRef.current.click();
 		}
+		await resetgeo();
+	};
+
+	const resetgeo = () => {
 		setPage(1);
 		setMetricFormData({
 			geo: [],
@@ -567,10 +594,6 @@ const ActionModal = ({ id, metric, setMetric }) => {
 			benchmark_logic_type: '',
 			ranking_metric: '',
 		});
-		resetgeo();
-	};
-
-	const resetgeo = () => {
 		setRegion((prevRegions) =>
 			prevRegions.map((region) => ({
 				...region,
@@ -578,7 +601,7 @@ const ActionModal = ({ id, metric, setMetric }) => {
 			}))
 		);
 		setSelectedCountries([]);
-		setSelectedMarketTeams([])
+		setSelectedMarketTeams([]);
 		setSelectedMarkets([]);
 		setSelectedStores([]);
 		setfinalSelections([]);
@@ -798,14 +821,16 @@ const ActionModal = ({ id, metric, setMetric }) => {
 														Selected ({finalSelections.length})
 													</div>
 													<div
-														className={`geo-box selected ${errors.geo ? 'error' : ''}`}>
+														className={`geo-box selected ${
+															errors.geo ? 'error' : ''
+														}`}>
 														{finalSelections.map((final, storeIndex) => (
 															<li key={storeIndex}>
 																{
 																	final[
-																	finalSelectionType != 'store'
-																		? finalSelectionType
-																		: 'name'
+																		finalSelectionType != 'store'
+																			? finalSelectionType
+																			: 'name'
 																	]
 																}
 															</li>
@@ -1017,46 +1042,47 @@ const ActionModal = ({ id, metric, setMetric }) => {
 							</>
 						) : (
 							<div>
-								<div className="py-3">
-									<h5>
-										<b>Ready To Create ({createdRecords.length})</b>
-									</h5>
-									<table className="newtable">
-										<thead>
-											<tr>
-												<th>Metric Name</th>
-												<th>Geo </th>
-												<th>LOB</th>
-												<th>RTM</th>
-												<th>Same Day Domestic</th>
-											</tr>
-										</thead>
-										<tbody>
-											{createdRecords &&
-												createdRecords.map((record, index) => {
-													return (
-														<tr key={index}>
-															<td>
-																{metric.metric_name} - {record.lob}
-															</td>
-															<td>{record.geo}</td>
-															<td>{record.lob}</td>
-															<td>{record.rtm}</td>
-															<td>{record.same_day_domestic}</td>
-														</tr>
-													);
-												})}
-										</tbody>
-									</table>
-								</div>
+								{createdRecords && createdRecords.length > 0 && (
+									<div className="py-3">
+										<h5>
+											<b>Ready To Create ({createdRecords.length})</b>
+										</h5>
+										<table className="newtable">
+											<thead>
+												<tr>
+													<th>Metric Name</th>
+													<th>Geo </th>
+													<th>LOB</th>
+													<th>RTM</th>
+													<th>Same Day Domestic</th>
+												</tr>
+											</thead>
+											<tbody>
+												{createdRecords &&
+													createdRecords.map((record, index) => {
+														return (
+															<tr key={index}>
+																<td>
+																	{metric.metric_name} - {record.lob}
+																</td>
+																<td>{record.geo}</td>
+																<td>{record.lob}</td>
+																<td>{record.rtm}</td>
+																<td>{record.same_day_domestic}</td>
+															</tr>
+														);
+													})}
+											</tbody>
+										</table>
+									</div>
+								)}
 
 								{updatedRecords && updatedRecords.length > 0 && (
 									<div className="py-3">
 										<h5>
 											<b>Already Exists ({updatedRecords.length})</b>
 										</h5>
-										<table
-											className="newtable">
+										<table className="newtable">
 											<thead>
 												<tr>
 													<th>Metric Name</th>
@@ -1094,8 +1120,8 @@ const ActionModal = ({ id, metric, setMetric }) => {
 							<>
 								<button
 									className="btn btn-secondary"
-									data-bs-dismiss="modal"
-									aria-label="Close" onClick={handleCancel}>
+									aria-label="Close"
+									onClick={handleCancel}>
 									Cancel
 								</button>
 								<button className="btn btn-primary" onClick={nextPage}>
@@ -1106,8 +1132,8 @@ const ActionModal = ({ id, metric, setMetric }) => {
 							<>
 								<button
 									className="btn btn-secondary"
-									data-bs-dismiss="modal"
-									aria-label="Close" onClick={handleCancel}>
+									aria-label="Close"
+									onClick={handleCancel}>
 									Cancel
 								</button>
 								<button
